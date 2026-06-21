@@ -1,5 +1,5 @@
 import { createSign } from 'node:crypto';
-import { createReadStream, existsSync } from 'node:fs';
+import { createReadStream, existsSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
@@ -227,8 +227,11 @@ async function serveStatic(req, res) {
   const normalizedPath = normalize(pathname).replace(/^(\.\.[/\\])+/, '');
   const requestedFile = join(distDir, normalizedPath);
   const safeFile = resolve(requestedFile);
+  const indexFile = join(distDir, 'index.html');
   const filePath =
-    safeFile.startsWith(distDir) && existsSync(safeFile) ? safeFile : join(distDir, 'index.html');
+    safeFile.startsWith(distDir) && existsSync(safeFile) && statSync(safeFile).isFile()
+      ? safeFile
+      : indexFile;
   const extension = extname(filePath);
 
   try {
@@ -241,7 +244,19 @@ async function serveStatic(req, res) {
     }
 
     res.writeHead(200, headers);
-    createReadStream(filePath).pipe(res);
+    if (req.method === 'HEAD') {
+      res.end();
+      return;
+    }
+
+    createReadStream(filePath)
+      .on('error', () => {
+        if (!res.headersSent) {
+          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+        }
+        res.end('Not found');
+      })
+      .pipe(res);
   } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Not found');
