@@ -8,6 +8,20 @@ const rootDir = resolve(__dirname, '..');
 const distDir = join(rootDir, 'dist');
 const indexFile = join(distDir, 'index.html');
 const port = Number.parseInt(process.env.PORT || process.env.APP_PORT || '3000', 10);
+const host = '0.0.0.0';
+
+process.on('uncaughtException', (error) => {
+  console.error('UNCAUGHT_EXCEPTION', error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('UNHANDLED_REJECTION', reason);
+});
+
+process.on('exit', (code) => {
+  console.error('PROCESS_EXIT', { code });
+});
 
 const mimeTypes = {
   '.css': 'text/css; charset=utf-8',
@@ -72,6 +86,14 @@ function serveStatic(req, res) {
 }
 
 const server = createServer((req, res) => {
+  console.log('HTTP_REQUEST', {
+    method: req.method,
+    url: req.url,
+    host: req.headers.host,
+    forwardedProto: req.headers['x-forwarded-proto'],
+    userAgent: req.headers['user-agent'],
+  });
+
   if (req.method === 'GET' && req.url === '/health') {
     return json(res, 200, { ok: true, mode: 'frontend' });
   }
@@ -84,6 +106,43 @@ const server = createServer((req, res) => {
   res.end();
 });
 
-server.listen(port, '0.0.0.0', () => {
+server.on('error', (error) => {
+  console.error('SERVER_ERROR', error);
+});
+
+server.on('close', () => {
+  console.error('SERVER_CLOSE');
+});
+
+process.once('SIGTERM', () => {
+  console.error('SIGTERM_RECEIVED');
+  server.close(() => {
+    process.exit(143);
+  });
+  setTimeout(() => process.exit(143), 5000).unref();
+});
+
+process.once('SIGINT', () => {
+  console.error('SIGINT_RECEIVED');
+  server.close(() => {
+    process.exit(130);
+  });
+  setTimeout(() => process.exit(130), 5000).unref();
+});
+
+console.log('FRONTEND_SERVER_STARTUP', {
+  nodeEnv: process.env.NODE_ENV,
+  nodeVersion: process.version,
+  portEnv: process.env.PORT,
+  appPortEnv: process.env.APP_PORT,
+  resolvedHost: host,
+  resolvedPort: port,
+  cwd: process.cwd(),
+  distDir,
+  indexFile,
+  indexExists: existsSync(indexFile),
+});
+
+server.listen(port, host, () => {
   console.log(`Frontend server is listening on port ${port}`);
 });
