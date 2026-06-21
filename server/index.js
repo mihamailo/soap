@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const rootDir = resolve(__dirname, '..');
 const distDir = join(rootDir, 'dist');
-const port = Number(process.env.PORT || 3000);
+const parsedPort = Number.parseInt(process.env.PORT || '', 10);
+const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
 const maxBodyBytes = 16 * 1024;
 
 const mimeTypes = {
