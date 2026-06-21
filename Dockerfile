@@ -13,6 +13,7 @@ FROM node:24-slim AS runtime
 
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV APP_PORT=3000
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
