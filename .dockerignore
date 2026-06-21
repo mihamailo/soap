@@ -1,0 +1,13 @@
+.git/
+.agents/
+dist/
+node_modules/
+tmp/
+
+*.log
+*.err.log
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
