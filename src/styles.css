@@ -627,14 +627,6 @@ button {
   width: 100%;
 }
 
-.leadForm > input[name="website"] {
-  position: absolute;
-  left: -10000px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
 .leadForm label {
   display: grid;
   gap: 6px;
@@ -689,35 +681,12 @@ button {
 }
 
 .leadWide,
-.leadSubmit,
-.leadStatus {
+.leadSubmit {
   grid-column: 1 / -1;
 }
 
 .leadSubmit {
   width: 100%;
-}
-
-.leadSubmit:disabled {
-  cursor: progress;
-  opacity: 0.72;
-  transform: none;
-}
-
-.leadStatus {
-  min-height: 20px;
-  margin: -2px 0 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.35;
-}
-
-.leadStatus.success {
-  color: #b9e49d;
-}
-
-.leadStatus.error {
-  color: #f4a7a0;
 }
 
 @media (max-width: 1050px) {

@@ -1,4 +1,3 @@
-import { type FormEvent, useState } from 'react';
 import {
   Droplets,
   Flower2,
@@ -65,40 +64,6 @@ const assurances = [
 ];
 
 function App() {
-  const [leadStatus, setLeadStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
-
-  async function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLeadStatus('sending');
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-
-    try {
-      const response = await fetch('/api/lead', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.get('name'),
-          phone: formData.get('phone'),
-          product: formData.get('product'),
-          message: formData.get('message'),
-          website: formData.get('website'),
-          source: window.location.href,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Lead submit failed');
-      }
-
-      form.reset();
-      setLeadStatus('success');
-    } catch {
-      setLeadStatus('error');
-    }
-  }
-
   return (
     <main className="page">
       <header className="header" aria-label="Главная навигация">
@@ -222,15 +187,14 @@ function App() {
           <h2>Подарите себе и близким натуральную роскошь</h2>
           <p>Быстрая доставка и красивая упаковка в подарок</p>
         </div>
-        <form className="leadForm" onSubmit={handleLeadSubmit}>
-          <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
+        <form className="leadForm">
           <label>
             <span>Имя</span>
-            <input name="name" type="text" autoComplete="name" required />
+            <input name="name" type="text" autoComplete="name" />
           </label>
           <label>
             <span>Телефон</span>
-            <input name="phone" type="tel" autoComplete="tel" required />
+            <input name="phone" type="tel" autoComplete="tel" />
           </label>
           <label className="leadWide">
             <span>Что интересно</span>
@@ -246,14 +210,10 @@ function App() {
             <span>Комментарий</span>
             <textarea name="message" rows={3} placeholder="Удобное время для звонка или пожелания" />
           </label>
-          <button className="primaryBtn leadSubmit" type="submit" disabled={leadStatus === 'sending'}>
+          <button className="primaryBtn leadSubmit" type="button">
             <ShoppingBag size={18} />
-            {leadStatus === 'sending' ? 'Отправляем...' : 'Оставить заявку'}
+            Оставить заявку
           </button>
-          <p className={`leadStatus ${leadStatus}`} role="status">
-            {leadStatus === 'success' && 'Заявка отправлена. Мы скоро свяжемся.'}
-            {leadStatus === 'error' && 'Не получилось отправить. Попробуйте еще раз.'}
-          </p>
         </form>
       </section>
     </main>
