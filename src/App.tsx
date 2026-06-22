@@ -1,3 +1,4 @@
+import { type ChangeEvent, type FormEvent, useState } from 'react';
 import {
   Droplets,
   Flower2,
@@ -10,6 +11,50 @@ import {
   Sparkles,
   Sprout,
 } from 'lucide-react';
+
+type LeadFormData = {
+  name: string;
+  phone: string;
+  product: string;
+  message: string;
+};
+
+type LeadStatus = 'idle' | 'sending' | 'success' | 'error';
+
+const initialLeadFormData: LeadFormData = {
+  name: '',
+  phone: '+7',
+  product: 'Подарочный набор',
+  message: '',
+};
+
+async function sendContactForm(data: LeadFormData) {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+  console.log(supabaseUrl)
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('supabase_config_missing');
+  }
+
+  const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/send-contact-form`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`,
+    },
+    body: JSON.stringify({
+      ...data,
+      source: window.location.href,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('contact_form_failed');
+  }
+}
 
 const benefits = [
   {
@@ -64,6 +109,42 @@ const assurances = [
 ];
 
 function App() {
+  const [leadFormData, setLeadFormData] = useState<LeadFormData>(initialLeadFormData);
+  const [leadStatus, setLeadStatus] = useState<LeadStatus>('idle');
+
+  function handleLeadChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
+    const { name, value } = event.target;
+
+    setLeadFormData((current) => ({
+      ...current,
+      [name]: value,
+    }));
+
+    if (leadStatus !== 'idle') {
+      setLeadStatus('idle');
+    }
+  }
+
+  async function handleLeadSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!leadFormData.name.trim() || leadFormData.phone.replace(/\D/g, '').length < 10) {
+      setLeadStatus('error');
+      return;
+    }
+
+    setLeadStatus('sending');
+
+    try {
+      await sendContactForm(leadFormData);
+      setLeadFormData(initialLeadFormData);
+      setLeadStatus('success');
+    } catch (error) {
+      console.error('Error sending form:', error);
+      setLeadStatus('error');
+    }
+  }
+
   return (
     <main className="page">
       <header className="header" aria-label="Главная навигация">
@@ -187,18 +268,18 @@ function App() {
           <h2>Подарите себе и близким натуральную роскошь</h2>
           <p>Быстрая доставка и красивая упаковка в подарок</p>
         </div>
-        <form className="leadForm">
+        <form className="leadForm" onSubmit={handleLeadSubmit}>
           <label>
             <span>Имя</span>
-            <input name="name" type="text" autoComplete="name" />
+            <input name="name" type="text" autoComplete="name" value={leadFormData.name} onChange={handleLeadChange} required />
           </label>
           <label>
             <span>Телефон</span>
-            <input name="phone" type="tel" autoComplete="tel" />
+            <input name="phone" type="tel" autoComplete="tel" value={leadFormData.phone} onChange={handleLeadChange} required />
           </label>
           <label className="leadWide">
             <span>Что интересно</span>
-            <select name="product" defaultValue="Подарочный набор">
+            <select name="product" value={leadFormData.product} onChange={handleLeadChange}>
               <option>Подарочный набор</option>
               <option>Угольное мыло</option>
               <option>Кофейный скраб</option>
@@ -208,12 +289,22 @@ function App() {
           </label>
           <label className="leadWide">
             <span>Комментарий</span>
-            <textarea name="message" rows={3} placeholder="Удобное время для звонка или пожелания" />
+            <textarea
+              name="message"
+              rows={3}
+              placeholder="Удобное время для звонка или пожелания"
+              value={leadFormData.message}
+              onChange={handleLeadChange}
+            />
           </label>
-          <button className="primaryBtn leadSubmit" type="button">
+          <button className="primaryBtn leadSubmit" type="submit" disabled={leadStatus === 'sending'}>
             <ShoppingBag size={18} />
-            Оставить заявку
+            {leadStatus === 'sending' ? 'Отправка...' : 'Оставить заявку'}
           </button>
+          <p className={`leadStatus ${leadStatus}`} role="status">
+            {leadStatus === 'success' && 'Заявка отправлена. Мы скоро свяжемся.'}
+            {leadStatus === 'error' && 'Проверьте имя и телефон или попробуйте отправить позже.'}
+          </p>
         </form>
       </section>
     </main>

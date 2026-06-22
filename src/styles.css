@@ -689,6 +689,29 @@ button {
   width: 100%;
 }
 
+.leadSubmit:disabled {
+  cursor: progress;
+  opacity: 0.72;
+  transform: none;
+}
+
+.leadStatus {
+  grid-column: 1 / -1;
+  min-height: 20px;
+  margin: -2px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.leadStatus.success {
+  color: #b9e49d;
+}
+
+.leadStatus.error {
+  color: #f4a7a0;
+}
+
 @media (max-width: 1050px) {
   .header {
     grid-template-columns: auto auto;
